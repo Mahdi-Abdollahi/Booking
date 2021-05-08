@@ -1,42 +1,36 @@
-import React, {useRef, useState} from "react"
-import {useAuth} from '../contexts/AuthContext'
-import {Link, useHistory} from "react-router-dom"
+import React, {useEffect, useRef, useState} from "react"
+import {Link, Redirect, useHistory} from "react-router-dom"
+import {connect} from "react-redux"
+import { authFail, signUp } from "../store/auth/actions"
 
-export default function SignUp() {
-
+function SignUp({
+    onSignUp,
+    onError,
+    isAuthenticated,
+    loading,
+    error
+}) {
     const emailRef = useRef();
     const passwordRef = useRef();
     const passwordConfirmRef = useRef();
-    const {signup} = useAuth()
     const history = useHistory();
-
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-
-
-    async function handelSubmit(e) {
-        e.preventDefault();
-        console.log("submited yes")
-        console.log(emailRef.current.value)
-
-        if( passwordRef.current.value !== passwordConfirmRef.current.value) {
-            console.log("pass error")
-            return setError("PASSWORD DO NOT MATCH!!!")
-        }
-
-        try {
-            setError("");
-            setLoading(true);
-            await signup(emailRef.current.value, passwordRef.current.value)
-            history.push("/");
-        } catch {
-            setError("Faild to create an acount");
-        }
-        setLoading(false)
+    
+    const nextPath = (path) => {
+        onError(null);
+        history.push(path);
     }
 
+    function handelSubmit(e) {
+        e.preventDefault();
+        if( passwordRef.current.value !== passwordConfirmRef.current.value) {
+            onError("PASSWORD DO NOT MATCH!!!");
+            return null;
+        }
+        onSignUp(emailRef.current.value, passwordRef.current.value);
+    }
     return (
         <div style={{minHeight: "100vh"}} className="d-flex justify-content-center align-items-center">
+        {isAuthenticated ? <Redirect to="/dashboard" /> : null}
         <div className="card w-75">
             <div className="card-body">
                 <h1 className="text-primary mb-4">Sign Up</h1>
@@ -58,9 +52,26 @@ export default function SignUp() {
                 </form>
             </div>
             <div className="text-center mb-3">
-                Already have an account? <Link to="/login">Log In</Link>
+                Already have an account? <button className="btn btn-link" onClick={() => nextPath("/login")}>Log In</button>
             </div>
         </div>
         </div>
     );
 }
+
+const mapStateToProps = state => {
+    return {
+        isAuthenticated: state.authReducer.token !== null,
+        error: state.authReducer.error,
+        loading: state.authReducer.loading
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onSignUp: (email, password) => dispatch(signUp(email, password)),
+        onError: (error) => dispatch(authFail(error)),
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(SignUp);

@@ -1,33 +1,46 @@
-import React from "react"
-import SignUp from "../components/SignUp";
-import Dashboard from "../components/Dashboard";
-import Login from "../components/Login";
-import ForgotPass from "../components/ForgotPass";
-import NewBook from "../components/NewBook";
-import EditBook from "../components/EditBook";
-import PrivateRoute from "../components/PrivateRoute";
-import { AuthProvider } from "../contexts/AuthContext";
+import React, { useEffect } from "react"
+import SignUp from "./SignUp";
+import Dashboard from "./Dashboard";
+import Login from "./Login";
+import ForgotPass from "./ForgotPass";
+import NewBook from "./NewBook";
+import EditBook from "./EditBook";
+import PrivateRoute from "../utils/PrivateRoute";
 import {BrowserRouter as Router, Switch, Route} from "react-router-dom"
+import { connect } from "react-redux";
 import "../style/bootstrap.min.css"
-// import {}
-function App() {
+import Home from "./Home"
+import { checkLocalStorageTokens } from "../store/auth/actions"
+
+function App({
+  onCheckLocalStorageTokens
+}) {
+
+  useEffect(() => {
+    onCheckLocalStorageTokens()
+  }, [])
+  
   return (
     <div>
         <Router>
-          <AuthProvider >
             <Switch>
-              <PrivateRoute exact path="/" component={Dashboard} />
+              <Route exact path="/" component={Home} />
+              <PrivateRoute path="/dashboard" component={Dashboard} />
               <Route path="/signup" component={SignUp} />
               <Route path="/login" component={Login} />
               <Route path="/forgot-password" component={ForgotPass} />
               <Route path="/add-book" component={NewBook} />
               <Route path="/edit" component={EditBook} />
             </Switch>
-
-          </AuthProvider>
         </Router>
     </div>
   );
 }
 
-export default App;
+const mapDispatchToProps = dispatch => {
+  return {
+    onCheckLocalStorageTokens: () => dispatch(checkLocalStorageTokens())
+  }
+}
+
+export default connect(null, mapDispatchToProps)(App);

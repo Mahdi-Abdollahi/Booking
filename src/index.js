@@ -3,11 +3,32 @@ import ReactDOM from 'react-dom';
 import App from './containers/App';
 import reportWebVitals from './reportWebVitals';
 import "bootstrap/dist/css/bootstrap.min.css"
+import { Provider } from "react-redux";
+import {createStore, applyMiddleware, combineReducers} from "redux";
+import createSagaMiddleware from "redux-saga"
+import { watchAuth } from "./store/auth/saga"
+import { watchBooks } from "./store/book/saga"
+import bookReducer from "./store/book/reducers";
+import authReducer from "./store/auth/reducers";
+
+const mainReducer = combineReducers({
+  bookReducer: bookReducer,
+  authReducer: authReducer
+})
+
+const sagaMiddleware = createSagaMiddleware();
+const store = createStore(mainReducer, applyMiddleware(sagaMiddleware));
+
+sagaMiddleware.run(watchAuth);
+sagaMiddleware.run(watchBooks);
+
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <Provider store={store} >
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  </Provider>,
   document.getElementById('root')
 );
 
